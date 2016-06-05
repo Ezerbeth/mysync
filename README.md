@@ -11,7 +11,7 @@ REQUIREMENTS:
 - Writable remote backup system
 - Access through sbm or afp
 - A sparsebundle file on the smb or afp share
-- rsync
+- rsync (from macports or brew)
 - bash
 - crontab
 
