@@ -41,3 +41,7 @@ CAVEATS:
 - This will print your password in plain text to mount the drive. If you're using encrypted backup disks, then it is
 strongly suggested you also encrypt this disk (the disk you are backing up, or the location where this script runs
 if it's not on the same disk) so the password is not accessible without first decrypting the drive.
+
+
+NOTES:
+- crontab-plist are completely *untested*. I use crontab.
