@@ -1,3 +1,4 @@
+# MySync
 
 MySync is a custom rsync incremental backup script for OSX. I wrote this for myself,
 due to the special requirements I have, and no good alternatives being around. Written
