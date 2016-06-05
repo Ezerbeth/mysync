@@ -1,0 +1,19 @@
+# Default OS
+/dev/*
+/Volumes/MobileBackups
+/.Spotlight-V100
+/.MobileBackups
+.Trashes
+/.Trash
+/tmp/*
+/Network/*
+/cores/*
+/afs/*
+/automount/*
+/private/tmp/*
+/private/var/run/*
+/private/var/spool/postfix/*
+/private/var/vm/*
+/private/var/folders/zz/
+
+# Personal stuff to ignore

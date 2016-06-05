@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# MySync firstrun script
+# See readme.txt for details
+#
+###############################################################################################
+################ DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING ################
+###############################################################################################
+
+if [[ "$@" == "" ]]
+    then
+	echo "something bad happened... no arguments passed... exiting."
+	exit
+fi
+
+# Make sure we're running as root
+ID=/usr/bin/id
+if [[ `$ID -u` != 0 ]]
+    then
+        echo "Sorry, must be root.  Exiting... See readme.txt."
+        exit
+fi
+
+unset PATH
+RM=/bin/rm
+MV=/bin/mv
+CP=/bin/cp
+MKDIR=/bin/mkdir
+PAX=/bin/pax
+TOUCH=/usr/bin/touch
+RSYNC=/usr/bin/rsync
+EXCLUDES=backup_exclude.txt
+LOCATION="$1"
+BACKUP="$2"
+DEBUG="$3"
+RSARGS="$4"
+
+if [ ! -d "$LOCATION/hourly/hourly.0" ]
+    then
+	$MKDIR -p "$LOCATION/hourly/hourly.0"
+	echo "$LOCATION/hourly/hourly.0 created" >> log/mysync.log
+fi
+
+# rsync from the system into the latest snapshot
+if [[ $DEBUG == "1" ]]
+    then
+        echo "Running: $RSYNC -v $RSARGS --numeric-ids --relative --exclude-from=$EXCLUDES $BACKUP $LOCATION/hourly/hourly.0/" >> log/mysync.log
+	$RSYNC -v $RSARGS --numeric-ids --relative --exclude-from="$EXCLUDES" "$BACKUP" "$LOCATION/hourly/hourly.0/" >> log/mysync.log 2>&1
+    else
+	$RSYNC $RSARGS --numeric-ids --relative --exclude-from="$EXCLUDES" "$BACKUP" "$LOCATION/hourly/hourly.0/" >> log/mysync.log 2>&1
+fi
+
+
+# Update the mtime of hourly.0 to reflect the snapshot time
+if [ -d "$LOCATION/hourly/hourly.0" ]
+    then
+	$TOUCH "$LOCATION/hourly/hourly.0"
+fi

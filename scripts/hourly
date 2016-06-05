@@ -1,0 +1,100 @@
+#!/bin/bash
+# MySync hourly script
+# Last updated: February 27th, 2016
+# See readme.txt for details
+#
+###############################################################################################
+################ DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING ################
+###############################################################################################
+
+if [[ "$@" == "" ]]
+    then
+	echo "something bad happened... no arguments passed... exiting."
+	exit
+fi
+
+# Make sure we're running as root
+ID=/usr/bin/id
+if [[ `$ID -u` != 0 ]]
+    then
+        echo "Sorry, must be root.  Exiting... See readme.txt."
+        exit
+fi
+
+unset PATH
+RM=/bin/rm
+MV=/bin/mv
+CP=/bin/cp
+MKDIR=/bin/mkdir
+PAX=/bin/pax
+TOUCH=/usr/bin/touch
+RSYNC=/usr/bin/rsync
+EXCLUDES=backup_exclude.txt
+LOCATION="$1"
+BACKUP="$2"
+DEBUG="$3"
+RSARGS="$4"
+
+########################## Hourly backups ###################################
+if [ ! -d $LOCATION/hourly ]
+    then
+        $MKDIR -p "$LOCATION/hourly"
+fi
+if [ -d "$LOCATION/hourly/hourly.6" ]
+   then
+	echo "Removing hourly.6..." >> log/mysync.log
+	$RM -rf "$LOCATION/hourly/hourly.6"
+	echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/hourly/hourly.5" ]
+    then
+        echo "Moving hourly.5..." >> log/mysync.log
+        $MV "$LOCATION/hourly/hourly.5" "$LOCATION/hourly/hourly.6"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/hourly/hourly.4" ]
+    then
+        echo "Moving hourly.4..." >> log/mysync.log
+        $MV "$LOCATION/hourly/hourly.4" "$LOCATION/hourly/hourly.5"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/hourly/hourly.3" ]
+    then
+        echo "Moving hourly.3..." >> log/mysync.log
+        $MV "$LOCATION/hourly/hourly.3" "$LOCATION/hourly/hourly.4"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/hourly/hourly.2" ]
+    then
+        echo "Moving hourly.2..." >> log/mysync.log
+	$MV "$LOCATION/hourly/hourly.2" "$LOCATION/hourly/hourly.3"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/hourly/hourly.1" ]
+    then
+        echo "Moving hourly.1..." >> log/mysync.log
+	$MV "$LOCATION/hourly/hourly.1" "$LOCATION/hourly/hourly.2"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/hourly/hourly.0" ]
+    then
+	$MKDIR -p "$LOCATION/hourly/hourly.1"
+	echo "Runnnig PAX -rwl $LOCATION/hourly/hourly.0 $LOCATION/hourly/hourly.1 ..." >> log/mysync.log
+	$PAX -rwl "$LOCATION/hourly/hourly.0" "$LOCATION/hourly/hourly.1"  >> log/mysync.log
+	echo "PAX done." >> log/mysync.log
+fi
+
+# rsync from the system into the latest snapshot
+if [[ $DEBUG == "1" ]]
+    then
+	echo "Running rsync: $RSYNC -v -$RSARGS --delete --numeric-ids --relative --delete-excluded --exclude-from="$EXCLUDES"  $BACKUP $LOCATION/hourly/hourly.0/ " >> log/mysync.log
+	$RSYNC -v $RSARGS --delete --numeric-ids --relative --delete-excluded --exclude-from="$EXCLUDES" $BACKUP $LOCATION/hourly/hourly.0/ >> log/mysync.log 2>log/mysync.log
+    else
+	$RSYNC $RSARGS --delete --numeric-ids --relative --delete-excluded --exclude-from="$EXCLUDES" $BACKUP $LOCATION/hourly/hourly.0/ >> log/mysync.log 2>log/mysync.log
+fi
+
+# Update the mtime of hourly.0 to reflect the snapshot time
+if [ -d "$LOCATION/hourly/hourly.0" ]
+    then
+	$TOUCH "$LOCATION/hourly/hourly.0"
+fi

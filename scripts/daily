@@ -1,0 +1,105 @@
+#!/bin/bash
+# MySync daily script
+# Last updated: February 27th, 2016
+# See readme.txt for details
+#
+###############################################################################################
+################ DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING ################
+###############################################################################################
+
+if [[ "$@" == "" ]]
+    then
+	echo "something bad happened... no arguments passed... exiting."
+	exit
+fi
+
+# Make sure we're running as root
+ID=/usr/bin/id
+if [[ `$ID -u` != 0 ]]
+    then
+        echo "Sorry, must be root.  Exiting... See readme.txt."
+        exit
+fi
+
+unset PATH
+RM=/bin/rm
+MV=/bin/mv
+CP=/bin/cp
+MKDIR=/bin/mkdir
+PAX=/bin/pax
+TOUCH=/usr/bin/touch
+RSYNC=/usr/bin/rsync
+EXCLUDES=backup_exclude.txt
+LOCATION="$1"
+BACKUP="$2"
+DEBUG="$3"
+RSARGS="$4"
+
+########################## daily backups ###################################
+if [ ! -d $LOCATION/daily ]
+    then
+        $MKDIR -p "$LOCATION/daily"
+fi
+#if [ -d $LOCATION/hourly/hourly.6 ]
+#   then
+#        $RM -rf "$LOCATION/daily/daily.0/"
+#        $MV "$LOCATION/hourly/hourly.6" "$LOCATION/daily/daily.0"
+#fi
+if [ -d "$LOCATION/daily/daily.6" ]
+   then
+	echo "Removing daily.6..." >> log/mysync.log
+	$RM -rf "$LOCATION/daily/daily.6"
+	echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/daily/daily.5" ]
+    then
+        echo "Moving daily.5..." >> log/mysync.log
+        $MV "$LOCATION/daily/daily.5" "$LOCATION/daily/daily.6"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/daily/daily.4" ]
+    then
+        echo "Moving daily.4..." >> log/mysync.log
+        $MV "$LOCATION/daily/daily.4" "$LOCATION/daily/daily.5"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/daily/daily.3" ]
+    then
+        echo "Moving daily.3..." >> log/mysync.log
+        $MV "$LOCATION/daily/daily.3" "$LOCATION/daily/daily.4"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/daily/daily.2" ]
+    then
+        echo "Moving daily.2..." >> log/mysync.log
+	$MV "$LOCATION/daily/daily.2" "$LOCATION/daily/daily.3"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/daily/daily.1" ]
+    then
+        echo "Moving daily.1..." >> log/mysync.log
+	$MV "$LOCATION/daily/daily.1" "$LOCATION/daily/daily.2"
+        echo "...done" >> log/mysync.log
+fi
+if [ -d "$LOCATION/daily/daily.0" ]
+    then
+	$MKDIR -p "$LOCATION/daily/daily.1"
+	echo "Runnnig PAX -rwl $LOCATION/daily/daily.0 $LOCATION/daily/daily.1 ..." >> log/mysync.log
+	$PAX -rwl "$LOCATION/daily/daily.0" "$LOCATION/daily/daily.1"  >> log/mysync.log
+	echo "PAX done." >> log/mysync.log
+fi
+
+# rsync from the system into the latest snapshot
+if [[ $DEBUG == "1" ]]
+    then
+	echo "Running rsync: $RSYNC -v -$RSARGS --delete --numeric-ids --relative --delete-excluded --exclude-from="$EXCLUDES"  $BACKUP $LOCATION/daily/daily.0/ " >> log/mysync.log
+	$RSYNC -v $RSARGS --delete --numeric-ids --relative --delete-excluded --exclude-from="$EXCLUDES" $BACKUP $LOCATION/daily/daily.0/ >> log/mysync.log 2>log/mysync.log
+    else
+	$RSYNC $RSARGS --delete --numeric-ids --relative --delete-excluded --exclude-from="$EXCLUDES" $BACKUP $LOCATION/daily/daily.0/ >> log/mysync.log 2>log/mysync.log
+fi
+
+# Update the mtime of daily.0 to reflect the snapshot time
+if [ -d "$LOCATION/daily/daily.0" ]
+    then
+	$TOUCH "$LOCATION/daily/daily.0"
+fi
